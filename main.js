@@ -30,73 +30,48 @@ mapBtn.addEventListener("click", () => {
   mapBtn.disabled = true;
 });
 
-navigator.requestMIDIAccess().then((access) => {
-  const inputs = access.inputs.values();
-  const outputs = access.outputs.values();
-
-  access.onstatechange = (Event) => {
-    console.log(
-      Event.stopPropagation.name,
-      Event.port.manufacturer,
-      Event.port.state
-    );
-  };
-});
-
 navigator.permissions.query({ name: "midi", sysex: true }).then((result) => {
   if (result.state === "granted") {
-    //access granted
+    // Access granted.
   } else if (result.state === "prompt") {
-    //using API will prompt for permission
+    // Using API will prompt for permission
   }
-  // permission was denied by user prompt or permission policy
+  // Permission was denied by user prompt or permission policy
 });
 
-let midi = null;
+navigator.requestMIDIAccess().then((access) => {
+  // Get lists of available MIDI controllers
+  const inputs = access.inputs.values();
+  const outputs = access.outputs.values();
+  // …
+});
 
-function onMIDISuccess(midiAccess) {
-  console.log("MIDI ready!");
-  midi = midiAccess;
-}
+let midi = null; // global MIDIAccess object
+//function onMIDISuccess(midiAccess) {
+//  console.log("MIDI ready!");
+//  midi = midiAccess; // store in the global (in real usage, would probably keep in an object instance)
+//}
 
 function onMIDIFailure(msg) {
   console.error(`Failed to get MIDI access - ${msg}`);
 }
+
 navigator.requestMIDIAccess().then(onMIDISuccess, onMIDIFailure);
 
-function listInputsAndOutputs(midiAccess) {
-  for (const entry of midiAccess.inputs) {
-    const input = entry[1];
-    console.log(
-      `Input port [type:'${input.type}']` +
-        ` id:'${input.id}'` +
-        ` manufacturer:'${input.manufacturer}'` +
-        ` name:'${input.name}'` +
-        ` version:'${input.version}'`
-    );
-  }
-  for (const entry of midiAccess.outputs) {
-    const output = entry[1];
-    console.log(
-      `Output port [type:'${output.type}']
-         id:'${output.id}' 
-         manufacturer:'${output.manufacturer}' 
-         name:'${output.name}' 
-         version:'${output.version}'`
-    );
-  }
-}
-
-function onMIDIMessage(Event) {
-  let str = `MIDI message received at timestamp ${Event.timeStamp}[${Event.data.length} bytes]: `;
-  for (const character of Event.data) {
+function onMIDIMessage(event) {
+  let str = `MIDI message received at timestamp ${event.timeStamp}[${event.data.length} bytes]: `;
+  for (const character of event.data) {
     str += `0x${character.toString(16)} `;
   }
   console.log(str);
 }
 
-function startLoggingMIDIInput(midiAccess) {
+function onMIDISuccess(midiAccess) {
   midiAccess.inputs.forEach((entry) => {
     entry.onmidimessage = onMIDIMessage;
   });
+}
+
+function onKeyPress() {
+  //this gotta change the key to blue
 }
